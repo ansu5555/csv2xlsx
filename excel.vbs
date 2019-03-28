@@ -1,6 +1,6 @@
-xlFileName = "new"
+xlFileName = "MaxFrequency"
 nameStartPos = 1
-nameLen = 2
+nameLen = 19
 
 Const xlOpenXMLWorkbook = 51
 
@@ -16,18 +16,29 @@ newPath = folderPath & "\" & xlFileName & ".xlsx"
 Set objWorkbook = objExcel.Workbooks.Add
 objWorkbook.SaveAs newPath, xlOpenXMLWorkbook, , , , False
 
+''Get all csv file names
+fileNames = ""
 Set Files = objFolder.Files
-
 For Each File in Files
     If UCase(objFSO.GetExtensionName(File.name)) = "CSV" Then    
-        '' Rename the csv
-        oldFilePath = File.Path
-        newFileName = replace(File.name, mid(File.name, nameStartPos, nameLen), "")
-        newFilePath = replace(File.Path, File.Name, newFileName)
-        objFSO.MoveFile oldFilePath, newFilePath
+        fileNames = fileNames & "*" & File.name
+	End If
+Next
+
+'' Rename the csvs       
+arrFileNames = Split(fileNames, "*")
+For Each fileName in arrFileNames
+    if fileName <> "" Then
+        newFileName = mid(fileName, 1, nameStartPos-1) & mid(fileName, nameStartPos + nameLen)
+        objFSO.MoveFile fileName, newFileName
+    End if
+Next
+
+For Each File in objFolder.Files
+    If UCase(objFSO.GetExtensionName(File.name)) = "CSV" Then    
         
         '' Open the csv
-        Set objCSV = objExcel.Workbooks.Open(newFilePath, ReadOnly=True)
+        Set objCSV = objExcel.Workbooks.Open(File.Path, ReadOnly=True)
         Set objCSVSheet = objCSV.Worksheets(1)
         
         '' Copy the sheet from csv
@@ -35,8 +46,8 @@ For Each File in Files
         objCSVSheet.Copy objWorkbookSheet
         
         '' Rename the sheet
-        Set objWorkbookSheet = objWorkbook.Worksheets(objWorkbook.Sheets.Count-1)
-        objWorkbookSheet.Name = replace(objCSV.Name, ".csv", "")
+        'Set objWorkbookSheet = objWorkbook.Worksheets(objWorkbook.Sheets.Count-1)
+        'objWorkbookSheet.Name = replace(objCSV.Name, ".csv", "")
         on error resume next
         objWorkbook.Save
         
